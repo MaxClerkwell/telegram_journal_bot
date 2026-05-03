@@ -1,0 +1,6 @@
+python-telegram-bot==21.*
+apscheduler==3.*
+aiofiles
+google-generativeai
+anthropic
+openai

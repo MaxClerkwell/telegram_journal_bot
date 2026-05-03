@@ -1,0 +1,8 @@
+services:
+  journal-bot:
+    build: .
+    volumes:
+      - ./repo:/repo
+      - ./ssh:/root/.ssh:ro
+    env_file: .env
+    restart: unless-stopped
