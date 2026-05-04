@@ -45,7 +45,12 @@ git config --global --add safe.directory /repo
 # Copy read-only SSH mount to writable location and add GitHub host key
 mkdir -p /tmp/.ssh
 cp /root/.ssh/* /tmp/.ssh/ 2>/dev/null || true
+# Rewrite IdentityFile paths to /tmp/.ssh/ so host-specific paths work in the container
+if [ -f /tmp/.ssh/config ]; then
+  sed -i 's|IdentityFile\s\+\S*/\([^/]*\)$|IdentityFile /tmp/.ssh/\1|g' /tmp/.ssh/config
+fi
 chmod 700 /tmp/.ssh
+chown -R root:root /tmp/.ssh
 chmod 600 /tmp/.ssh/* 2>/dev/null || true
 ssh-keyscan github.com >> /tmp/.ssh/known_hosts 2>/dev/null
 # Find private key: prefer id_rsa, then id_ed25519, then id_ecdsa
@@ -57,10 +62,12 @@ for keyname in id_rsa id_ed25519 id_ecdsa; do
 done
 if [ -z "${SSH_KEY}" ]; then
   echo "WARNING: No SSH private key found in /root/.ssh (looked for id_rsa, id_ed25519, id_ecdsa)"
+  export GIT_SSH_COMMAND="ssh -F /tmp/.ssh/config -o UserKnownHostsFile=/tmp/.ssh/known_hosts -o StrictHostKeyChecking=no"
 else
-  export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -F /tmp/.ssh/config -o UserKnownHostsFile=/tmp/.ssh/known_hosts -o StrictHostKeyChecking=no"
   echo "Using SSH key: ${SSH_KEY}"
+  export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -F /tmp/.ssh/config -o UserKnownHostsFile=/tmp/.ssh/known_hosts -o StrictHostKeyChecking=no"
 fi
+echo "GIT_SSH_COMMAND: ${GIT_SSH_COMMAND}"
 
 # Configure git
 GIT_NAME="${GIT_USER_NAME:-Journal Bot}"
