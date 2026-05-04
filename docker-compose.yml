@@ -3,6 +3,6 @@ services:
     build: .
     volumes:
       - ./repo:/repo
-      - ./ssh:/root/.ssh:ro
+      - ${SSH_PRIVATE_KEY_PATH}:/tmp/.ssh/id_private:ro
     env_file: .env
     restart: unless-stopped
